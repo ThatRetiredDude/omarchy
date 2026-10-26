@@ -130,6 +130,25 @@ charging_output=$(OMARCHY_POWER_SUPPLY_PATH="$hold_dir/power" PATH="$hold_dir/bi
 grep -Fx $'time\t1h' <<<"$charging_output" >/dev/null || fail "time to full counts up to the charge limit" "$charging_output"
 pass "battery status times charging to the charge limit"
 
+# The limit sysfs enforces wins over UPower's, which can be the hwdb's generic
+# 75-80% default rather than the limit set in firmware or asusctl.
+sed -i 's/charge-end-threshold: 80%/charge-threshold-enabled: yes\n  charge-start-threshold: 75%\n  charge-end-threshold: 80%/' "$hold_dir/bin/upower"
+printf '90\n' >"$hold_dir/power/BAT0/charge_control_end_threshold"
+sysfs_limit_output=$(OMARCHY_POWER_SUPPLY_PATH="$hold_dir/power" PATH="$hold_dir/bin:$PATH" "$ROOT/bin/omarchy-battery-status" --shell)
+grep -Fx $'time\t1h 15m' <<<"$sysfs_limit_output" >/dev/null || fail "time to full counts to the sysfs charge limit" "$sysfs_limit_output"
+grep -Fx $'threshold\t90%' <<<"$sysfs_limit_output" >/dev/null || fail "the sysfs charge limit is the one reported" "$sysfs_limit_output"
+
+# A sysfs end threshold of 100 means no limit, whatever UPower reports.
+printf '100\n' >"$hold_dir/power/BAT0/charge_control_end_threshold"
+no_limit_output=$(OMARCHY_POWER_SUPPLY_PATH="$hold_dir/power" PATH="$hold_dir/bin:$PATH" "$ROOT/bin/omarchy-battery-status" --shell)
+grep -Fx $'time\t1h 30m' <<<"$no_limit_output" >/dev/null || fail "no limit counts up to a full battery" "$no_limit_output"
+if grep -q '^threshold' <<<"$no_limit_output"; then
+  fail "no limit reports no threshold" "$no_limit_output"
+fi
+printf '80\n' >"$hold_dir/power/BAT0/charge_control_end_threshold"
+sed -i '/charge-threshold-enabled: yes/d; /charge-start-threshold: 75%/d' "$hold_dir/bin/upower"
+pass "battery status prefers the charge limit sysfs enforces"
+
 # UPower's own estimate stands in when the draw is too small to divide by...
 printf '100000\n' >"$hold_dir/power/BAT0/power_now"
 idle_output=$(OMARCHY_POWER_SUPPLY_PATH="$hold_dir/power" PATH="$hold_dir/bin:$PATH" "$ROOT/bin/omarchy-battery-status" --shell)
