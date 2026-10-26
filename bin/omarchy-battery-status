@@ -89,10 +89,13 @@ threshold_end=""
 # limit in force, and stand in only when sysfs has none and UPower says the
 # limit is on. Read them from the battery UPower resolved rather than a BAT*
 # glob, which misses every battery with another name.
+own_limit=false
 if [[ -r $battery_path/charge_control_end_threshold ]]; then
+  own_limit=true
   threshold_end=$(<"$battery_path/charge_control_end_threshold")
   [[ ! -r $battery_path/charge_control_start_threshold ]] || threshold_start=$(<"$battery_path/charge_control_start_threshold")
 elif grep -qE '^\s*charge-threshold-enabled:\s+yes' <<<"$battery_info"; then
+  own_limit=true
   threshold_start=$(awk '/charge-start-threshold:/ { gsub(/%/, "", $2); print int($2); exit }' <<<"$battery_info")
   threshold_end=$(awk '/charge-end-threshold:/ { gsub(/%/, "", $2); print int($2); exit }' <<<"$battery_info")
 fi
@@ -108,7 +111,9 @@ clear_unset_limit() {
 clear_unset_limit
 # The time to full counts to this battery's own limit, never another one's.
 charge_limit=${threshold_end:-100}
-if [[ -z $threshold_end ]]; then
+# Only a battery that says nothing of its own limit borrows a BAT* one; a
+# battery known to have none keeps none.
+if [[ $own_limit == "false" ]]; then
   threshold_end=$(cat "$power_supply_path"/BAT*/charge_control_end_threshold 2>/dev/null | head -1)
   threshold_start=$(cat "$power_supply_path"/BAT*/charge_control_start_threshold 2>/dev/null | head -1)
   clear_unset_limit
