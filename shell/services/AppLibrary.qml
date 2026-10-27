@@ -31,6 +31,10 @@ Item {
   // down.
   property bool launchOsdOpen: false
   property string launchOsdMessage: ""
+  // A close asked for while the show command is still on its way. The two run
+  // as separate IPC clients with no ordering between them, so a close sent
+  // then could land first and leave the duration-0 OSD up for good.
+  property bool launchOsdClosePending: false
 
   // Emitted whenever the visible application set may have changed: desktop
   // entries appeared or vanished, or the hidden-entry filters reloaded.
@@ -186,7 +190,8 @@ Item {
     launchDelay.stop()
     launchTimeout.stop()
     if (root.launchOsdOpen) {
-      Quickshell.execDetached(["omarchy-shell", "osd", "close"])
+      if (launchOsdShow.running) root.launchOsdClosePending = true
+      else Quickshell.execDetached(["omarchy-shell", "osd", "close"])
       root.launchOsdOpen = false
     }
   }
@@ -257,7 +262,19 @@ Item {
     onTriggered: {
       if (root.toplevelCount() > root.launchToplevelCount || ToplevelManager.activeToplevel !== root.launchActiveToplevel) return
       root.launchOsdOpen = true
-      Quickshell.execDetached(["omarchy-shell", "osd", "show", JSON.stringify({ icon: "󱓞", message: root.launchOsdMessage, duration: 0 })])
+      root.launchOsdClosePending = false
+      launchOsdShow.command = ["omarchy-shell", "osd", "show", JSON.stringify({ icon: "󱓞", message: root.launchOsdMessage, duration: 0 })]
+      launchOsdShow.running = true
+    }
+  }
+
+  // The show runs as a tracked process so a close can wait for it to land.
+  Process {
+    id: launchOsdShow
+    onExited: {
+      if (!root.launchOsdClosePending) return
+      root.launchOsdClosePending = false
+      Quickshell.execDetached(["omarchy-shell", "osd", "close"])
     }
   }
 
