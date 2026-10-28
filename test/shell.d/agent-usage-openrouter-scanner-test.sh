@@ -151,8 +151,8 @@ expect("a management key's history is account-wide, with no prompt counts, besid
        picked(record, "scope", "hasPromptStats") + [sorted(record["modelUsage"]), remaining(record), openrouter.asked],
        ["account", False, ["b"], 9.0, ["/activity=sk-mgmt", "/credits=sk-mgmt", "/key=sk-test"]], record)
 expect("today comes from this machine's sessions, the days before from the history",
-       picked(record, "todayTotalTokens", "todayTokensByModel") + [days[TODAY.strftime("%Y-%m-%d")], days[YESTERDAY]],
-       [100, {"claude-test": 100}, 100, 15], record)
+       picked(record, "todayScope", "todayTotalTokens", "todayTokensByModel") + [days[TODAY.strftime("%Y-%m-%d")], days[YESTERDAY]],
+       ["device", 100, {"claude-test": 100}, 100, 15], record)
 
 # A management key alone still collects the history and the balance, with no
 # inference key's meter to show.
