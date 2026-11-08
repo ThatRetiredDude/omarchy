@@ -60,6 +60,24 @@ pass "migration runner runs all migrations"
 grep -Fx 'Omarchy Migrations' "$dismissals" >/dev/null || fail "migration runner dismisses migration notifications"
 pass "migration runner clears completed migration notifications"
 
+# The reminder's title is translated, and the shell takes a card down when its
+# summary contains a needle, so one needle has to lie inside the German title.
+language_root="$test_tmp/language-omarchy"
+mkdir -p "$language_root/migrations"
+ln -s "$ROOT/default" "$language_root/default"
+echo de >"$test_tmp/language"
+: >"$dismissals"
+OMARCHY_LANGUAGE_FILE="$test_tmp/language" run_migrate "$test_home" "$language_root" >"$test_tmp/language.out"
+title=$(OMARCHY_LANGUAGE_FILE="$test_tmp/language" "$ROOT/bin/omarchy-i18n" migrate.pending)
+cleared=0
+while IFS= read -r needle; do
+  if [[ -n $needle && $title == *"$needle"* ]]; then
+    cleared=1
+  fi
+done <"$dismissals"
+(( cleared )) || fail "migration runner clears the reminder in the user's language" "$title"
+pass "migration runner clears the reminder in the user's language"
+
 run_migrate "$test_home" "$test_root" >"$test_tmp/second-run.out"
 (( $(wc -l <"$calls") == 2 )) || fail "migration runner skips completed migrations"
 pass "migration runner skips completed migrations"
