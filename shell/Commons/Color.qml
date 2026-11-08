@@ -140,6 +140,8 @@ QtObject {
     var lines = String(raw || "").split("\n")
     var foundAccent = false
     var foundMuted = false
+    var foundForeground = false
+    var foundBackground = false
     var loadedForeground = false
     var loadedBackground = false
     var color0Value = ""
@@ -149,8 +151,12 @@ QtObject {
     for (var i = 0; i < lines.length; i++) {
       var match = lines[i].match(/^\s*([A-Za-z0-9_-]+)\s*=\s*["']?(#[0-9A-Fa-f]{6})/)
       if (!match) continue
-      if (match[1] === "foreground") { foreground = match[2]; loadedForeground = true }
-      else if (match[1] === "background") { background = match[2]; loadedBackground = true }
+      if (match[1] === "foreground") { foreground = match[2]; foundForeground = true; loadedForeground = true }
+      else if (match[1] === "background") { background = match[2]; foundBackground = true; loadedBackground = true }
+      // Themes from before the bg/fg rename still use the short names, as
+      // omarchy-theme-color allows. The canonical name wins in either order.
+      else if (match[1] === "fg" && !foundForeground) { foreground = match[2]; loadedForeground = true }
+      else if (match[1] === "bg" && !foundBackground) { background = match[2]; loadedBackground = true }
       // Prefer the explicit `accent` key; only fall back to color4 when the
       // theme doesn't define a separate accent. color4 appears later in the
       // file so the old single-property approach clobbered accent with it.

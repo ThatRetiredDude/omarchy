@@ -11,7 +11,7 @@ const geometry = fs.readFileSync(path.join(root, 'shell/Commons/BorderGeometry.j
 const palette = { foreground: '#eeeeee', background: '#111111', accent: '#abcdef', urgent: '#ff0000', muted: '#777777' }
 const context = vm.createContext({ root: { ...palette, shellValues: {} }, Geometry: {} })
 vm.runInNewContext(geometry, context.Geometry)
-for (const name of ['firstColorToken', 'flatColor', 'parseShell']) {
+for (const name of ['firstColorToken', 'flatColor', 'parseShell', 'loadColors']) {
   const fn = source.match(new RegExp(`  function ${name}\\([^]*?\\n  }`))
   if (!fn) fail(`Color.qml provides ${name}`)
   vm.runInContext(fn[0], context)
@@ -49,4 +49,17 @@ for (let i = 0; i < 10000; i++) chain[`chain.c${i}`] = `chain.c${i + 1}`
 chain['chain.c10000'] = '#abcdef'
 check(chain, 'chain.c0', '#abcdef', 'long acyclic chains do not exhaust the call stack')
 check({ 'a.color': '#abcdef' }, 'a.color', '#abcdef', 'visited references do not leak between resolutions')
+
+// loadColors sets the palette by bare name (the singleton's properties in QML,
+// the context's globals here). Each load starts from the previous theme's
+// palette, which a theme switch keeps unless the new colors.toml replaces it.
+function checkPalette(raw, foreground, background, description) {
+  Object.assign(context, { foreground: '#a9b1d6', background: '#1a1b26' })
+  context.input = raw
+  vm.runInContext('loadColors(input)', context)
+  assertDeepEqual({ foreground: context.foreground, background: context.background }, { foreground, background }, description)
+}
+
+checkPalette('bg = "#eff1f5"\nfg = "#4c4f69"', '#4c4f69', '#eff1f5', 'legacy bg/fg names replace the previous theme palette')
+checkPalette('fg = "#abcdef"\nforeground = "#ffffff"\nbackground = "#000000"\nbg = "#abcdef"', '#ffffff', '#000000', 'canonical names win over bg/fg in either order')
 JS
