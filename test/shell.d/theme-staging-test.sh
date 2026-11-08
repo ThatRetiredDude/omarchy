@@ -203,6 +203,26 @@ done
 
 pass "a theme name cannot climb out of the theme directories"
 
+# A theme removed while it was current leaves theme.name naming it and nothing
+# to re-stage, and a migration that refreshes then stops the update. A switch on
+# the desktop links its background inside the staged copy the refresh replaces.
+doomed="$themes/doomed"
+mkdir -p "$doomed/backgrounds"
+write_colors "$doomed/colors.toml"
+printf 'png\n' >"$doomed/backgrounds/1-doomed.png"
+set_theme doomed || fail "omarchy-theme-set applies a theme that is then removed"
+ln -nsf "$(staged backgrounds/1-doomed.png)" "$state/background"
+rm -rf "$doomed"
+
+HOME="$home" OMARCHY_PATH="$ROOT" PATH="$ROOT/bin:$PATH" \
+  OMARCHY_THEME_HEADLESS=1 XDG_RUNTIME_DIR="$test_tmp" \
+  bash "$ROOT/bin/omarchy-theme-refresh" >"$test_tmp/output" 2>&1 ||
+  fail "omarchy-theme-refresh succeeds after the current theme was removed" "$(cat "$test_tmp/output")"
+[[ $(<"$state/theme.name") == "tokyo-night" ]] || fail "refreshing a removed theme applies the default"
+[[ -f $state/background ]] || fail "the default's background replaces the removed theme's"
+
+pass "refreshing after the current theme was removed applies the default"
+
 # A denylist is only correct while someone adding a template classifies what it
 # generates. Every generated theme file is either denied to an installed theme or
 # recorded here as carrying colour, so a new template fails until it is placed.

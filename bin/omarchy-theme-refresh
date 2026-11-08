@@ -7,5 +7,16 @@ THEME_NAME_PATH="$HOME/.local/state/omarchy/current/theme.name"
 # Installers and migrations refresh the theme and then read the app configs it
 # writes, so this waits for every retint rather than leaving some running.
 if [[ -f $THEME_NAME_PATH ]]; then
-  OMARCHY_THEME_WAIT=1 OMARCHY_THEME_SKIP_BACKGROUND=1 omarchy-theme-set "$(cat $THEME_NAME_PATH)"
+  THEME_NAME=$(<"$THEME_NAME_PATH")
+
+  # A theme removed while it was current leaves nothing to re-stage, and failing
+  # here stops the update at whichever migration refreshes next. Apply the
+  # default instead, background included: the background link points into the
+  # removed theme's staged copy, which this replaces.
+  if [[ ! -d $OMARCHY_PATH/themes/$THEME_NAME && ! -d $HOME/.config/omarchy/themes/$THEME_NAME ]]; then
+    echo "Theme '$THEME_NAME' no longer exists; applying the default instead"
+    OMARCHY_THEME_WAIT=1 omarchy-theme-set "Tokyo Night"
+  else
+    OMARCHY_THEME_WAIT=1 OMARCHY_THEME_SKIP_BACKGROUND=1 omarchy-theme-set "$THEME_NAME"
+  fi
 fi
