@@ -97,6 +97,16 @@ grep -F 'scale = 2' "$eval_out" >/dev/null || fail "monitor scaling down snaps f
 [[ $(setting eDP-1) == "||2" ]] || fail "monitor scaling down saves 2x from floating point 3x"
 pass "monitor scaling down snaps floating point 3x to 2x"
 
+# A scale between presets, like the 1.5 Hyprland's auto scale picks for a 27"
+# 4K, steps to the preset beside it rather than past the one nearest it.
+fresh
+OMARCHY_TEST_MONITOR_SCALE=1.5 run_scaling up
+[[ $(setting eDP-1) == "||1.6" ]] || fail "monitor scaling up steps from 1.5x to 1.6x" "actual: $(setting eDP-1)"
+fresh
+OMARCHY_TEST_MONITOR_SCALE=1.6666666666666667 run_scaling down
+[[ $(setting eDP-1) == "||1.6" ]] || fail "monitor scaling down steps from 1.67x to 1.6x" "actual: $(setting eDP-1)"
+pass "monitor scaling steps from a scale between presets to the one beside it"
+
 fresh
 OMARCHY_TEST_MONITOR_SCALE=2 run_scaling 3
 grep -F 'scale = 3' "$eval_out" >/dev/null || fail "monitor scaling explicit 3x remains available"

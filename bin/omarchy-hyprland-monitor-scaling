@@ -152,21 +152,24 @@ scale_from_current() {
         }
       }
 
-      # Snap to the nearest effective scale first. Hyprland reports floating
-      # point values, so exact comparisons can otherwise get stuck.
-      best = 1; best_diff = 1e9
-      for (i = 1; i <= n; i++) {
-        diff = scale - effective_scales[i]; if (diff < 0) diff = -diff
-        if (diff < best_diff) { best_diff = diff; best = i }
-      }
-
+      # Step from the current scale itself, not from the preset nearest it, or
+      # a scale between presets (the 1.5 auto scaling picks for a 27" 4K) skips
+      # the preset beside it. Clean scales are at least 1/120 apart, and
+      # Hyprland reports floating point values (3 can come back as
+      # 3.0000000000000004), so within half of that counts as the same scale.
+      half_step = 1 / 240
       if (direction == "next") {
-        print scales[(best < n ? best + 1 : n)]
-      } else if (direction == "previous") {
-        print scales[(best > 1 ? best - 1 : 1)]
+        pick = n
+        for (i = 1; i <= n; i++) {
+          if (effective_scales[i] > scale + half_step) { pick = i; break }
+        }
       } else {
-        print scales[best]
+        pick = 1
+        for (i = n; i >= 1; i--) {
+          if (effective_scales[i] < scale - half_step) { pick = i; break }
+        }
       }
+      print scales[pick]
     }'
 }
 
