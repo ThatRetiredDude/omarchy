@@ -1,6 +1,11 @@
--- Dictation keys are bound only once the chosen backend's own program is
--- installed (Omarchy ships every adapter), so a selected backend that was
--- removed doesn't hold Right Alt (AltGr) or Alt + Space for nothing.
+local paths = require("default.hypr.paths")
+
+-- Dictation keys are bound only once the chosen backend is installed, so a
+-- selected backend that was removed doesn't hold Right Alt (AltGr) or
+-- Alt + Space for nothing. Omarchy ships the adapters for its own backends
+-- whether they are installed or not, so those also need the backend's own
+-- program; any other backend brings its adapter, which is all
+-- omarchy-dictation needs.
 -- Personal bindings.lua dictation keys use the same check.
 function o.dictation_installed()
   local pipe = io.popen("omarchy-default-dictation 2>/dev/null", "r")
@@ -8,7 +13,15 @@ function o.dictation_installed()
   if pipe then
     pipe:close()
   end
-  return backend ~= nil and backend:match("^[%w%-]+$") ~= nil and not o.cmd_missing(backend)
+  if not backend or not backend:match("^[%w%-]+$") then
+    return false
+  end
+
+  local adapter = "omarchy-dictation-" .. backend
+  if o.cmd_present(paths.omarchy_path .. "/bin/" .. adapter) then
+    return o.cmd_present(backend)
+  end
+  return o.cmd_present(adapter)
 end
 
 if o.dictation_installed() then

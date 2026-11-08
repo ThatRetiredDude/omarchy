@@ -276,16 +276,23 @@ pass "selection updates are atomic for concurrent readers"
 
 lua - <<'LUA' || fail "dictation shortcuts require a selection without limiting backend names"
 local root = os.getenv("ROOT")
-local selected, installed, bindings = nil, true, {}
+package.path = root .. "/?.lua;" .. package.path
+local selected, on_path, bindings = nil, {}, {}
 io.popen = function(command)
   assert(command == "omarchy-default-dictation 2>/dev/null")
   return { read = function() return selected end, close = function() end }
 end
 o = {
-  cmd_missing = function(command)
-    assert(command == selected)
-    return not installed
+  -- As in helpers.lua, a path names a file and anything else is looked up on PATH.
+  cmd_present = function(command)
+    if command:find("/", 1, true) then
+      local file = io.open(command, "r")
+      if file then file:close() end
+      return file ~= nil
+    end
+    return on_path[command] == true
   end,
+  cmd_missing = function(command) return not o.cmd_present(command) end,
   bind = function(...) table.insert(bindings, {...}) end,
   bind_hold = function(keys, _, press, _, release)
     table.insert(bindings, { keys, false, press })
@@ -294,7 +301,9 @@ o = {
 }
 dofile(root .. "/default/hypr/bindings/dictation.lua")
 assert(#bindings == 0, "unconfigured dictation leaves application keys available")
-selected = "some-backend"
+-- A backend Omarchy doesn't ship brings only its adapter, whatever its own
+-- program is called.
+selected, on_path = "some-backend", { ["omarchy-dictation-some-backend"] = true }
 dofile(root .. "/default/hypr/bindings/dictation.lua")
 local function binds(keys, command)
   for _, binding in ipairs(bindings) do
@@ -306,10 +315,17 @@ assert(binds("ALT + SPACE", "omarchy-dictation toggle"), "Alt + Space toggles di
 assert(binds("ALT + Alt_R", "omarchy-dictation start") and binds("ALT + Alt_R", "omarchy-dictation stop"),
   "Right Alt starts dictation on press and stops it on release")
 assert(o.dictation_installed(), "personal dictation keys see the installed backend")
-bindings, installed = {}, false
+bindings, on_path = {}, {}
 dofile(root .. "/default/hypr/bindings/dictation.lua")
 assert(#bindings == 0, "a selected backend that is not installed leaves application keys available")
 assert(not o.dictation_installed(), "personal dictation keys release their keys once the backend is gone")
+-- Omarchy ships the adapters for its own backends, installed or not.
+selected, on_path = "voxtype", { ["omarchy-dictation-voxtype"] = true }
+dofile(root .. "/default/hypr/bindings/dictation.lua")
+assert(#bindings == 0, "an Omarchy backend whose program is gone leaves application keys available")
+on_path.voxtype = true
+dofile(root .. "/default/hypr/bindings/dictation.lua")
+assert(#bindings == 3, "an installed Omarchy backend receives the dictation keys")
 LUA
 pass "Alt + Space toggles dictation and Right Alt records while held, once a backend is installed"
 
