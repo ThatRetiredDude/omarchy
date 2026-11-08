@@ -566,9 +566,11 @@ PanelWindow {
       PopupMenuRow {
         visible: window.settingsMenu
         text: Commons.I18n.t("dock.autoHide")
-        checked: window.autohide
+        // The setting, not whether the dock is hiding now: a maximized window
+        // hides it too.
+        checked: !!window.dock && window.dock.autohide
         onTriggered: {
-          Util.execDetached("omarchy-dock autohide " + (window.autohide ? "off" : "on"))
+          Util.execDetached("omarchy-dock autohide toggle")
           window.closeMenu()
         }
       }
