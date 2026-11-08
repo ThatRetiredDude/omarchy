@@ -654,8 +654,9 @@ user_form() {
 confirm_form() {
   clear_logo
   echo
+  # gum table reads CSV, and layout labels like "English (US, Dvorak)" hold a comma.
   echo -e "Field,Value
-Keyboard,${keyboard_label:-English (US)}
+Keyboard,\"${keyboard_label:-English (US)}\"
 Username,$username
 Password,$(printf "%${#password}s" | tr ' ' '*')
 Hostname,${hostname:-omarchy}

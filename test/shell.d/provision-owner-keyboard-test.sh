@@ -316,6 +316,23 @@ form || fail "off a console the layout is only persisted" "$(cat "$tmp/screen" "
 assert_layout dk "off a console"
 pass "off a virtual console the layout is persisted and checked without loadkeys"
 
+# Setup's summary is a gum table, which reads CSV: a layout label with a comma
+# must stay one field, or gum draws no table and the owner confirms blind.
+(
+  source "$ROOT/install/provisioning/setup-form.sh"
+  eval "$(sed -n '/^confirm_form() {/,/^}/p' "$ROOT/bin/omarchy-provision-owner")"
+  declare -F confirm_form >/dev/null || fail "omarchy-provision-owner defines setup's summary"
+  clear_logo() { :; }
+  gum() { [[ $1 != table ]] || cat >"$tmp/summary.csv"; }
+  username=owner password=secret hostname=omarchy timezone=UTC PADDING_LEFT_SPACES=""
+  while IFS='|' read -r keyboard_label _; do
+    confirm_form >/dev/null
+    python3 -c 'import csv, sys; rows = list(csv.reader(open(sys.argv[1]), strict=True)); assert all(len(row) == 2 for row in rows) and dict(rows)["Keyboard"] == sys.argv[2]' "$tmp/summary.csv" "$keyboard_label" ||
+      fail "the summary shows the $keyboard_label layout in one field" "$(cat "$tmp/summary.csv")"
+  done <<<"$OMARCHY_KEYBOARD_LAYOUTS"
+  pass "setup's summary shows every layout the form offers in one field"
+)
+
 # First-boot setup's progress screen, which the ISO install dashboard draws too:
 # install/provisioning/progress-icon.sh. It runs in a subshell so its globals and
 # stubs stay out of the keyboard tests.
