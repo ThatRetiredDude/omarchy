@@ -29,6 +29,7 @@ cat >"$stub_bin/limine-mkinitcpio" <<'SH'
 #!/bin/bash
 echo rebuild >>"$TEST_LOG"
 [[ -z ${REBUILD_FAILS:-} ]] || echo "mkinitcpio failed for kernel linux"
+[[ -z ${REBUILD_EXITS:-} ]] || exit 1
 SH
 
 chmod +x "$stub_bin"/*
@@ -74,6 +75,8 @@ toprow mediakeys >/dev/null
 pass "toprow rebuilds nothing when nothing changed"
 
 REBUILD_FAILS=1 toprow fnkeys >/dev/null 2>&1 && fail "toprow fails when the boot image is not rebuilt"
+output=$(REBUILD_EXITS=1 toprow fnkeys 2>&1) && fail "toprow fails when limine-mkinitcpio fails"
+[[ $output == *"run omarchy-keyboard-toprow fnkeys again"* ]] || fail "toprow says to run it again when limine-mkinitcpio fails" "$output"
 : >"$calls"
 toprow fnkeys >/dev/null
 [[ $(<"$calls") == "rebuild" && $(toprow) == "fnkeys" ]] || fail "toprow retries a failed rebuild" "$(cat "$calls")"
