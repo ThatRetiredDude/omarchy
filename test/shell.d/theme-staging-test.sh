@@ -194,6 +194,17 @@ grep -q "$marker" "$(staged hyprland.lua)" || fail "a symlinked working copy is 
 
 pass "a symlinked working copy is the user's own"
 
+# A theme folder made by hand keeps the name it was given, which the picker
+# passes back as it is. Bash only lowercases a capital like É in a UTF-8 locale.
+for name in "My theme" "Été theme"; do
+  mkdir -p "$themes/$name"
+  write_colors "$themes/$name/colors.toml"
+  LC_ALL=C.UTF-8 set_theme "$name" >/dev/null || fail "omarchy-theme-set applies the hand-made theme '$name'"
+  [[ $(<"$state/theme.name") == "$name" ]] || fail "a hand-made theme is recorded under its folder name"
+done
+
+pass "a hand-made theme applies by the name its folder was given"
+
 # The name is joined into paths that get removed and copied into.
 for name in .. . "../../evil"; do
   if set_theme "$name" >/dev/null; then
