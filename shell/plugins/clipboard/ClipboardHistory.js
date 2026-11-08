@@ -219,6 +219,14 @@ function displayRows(history, query, limit, tr, trn, fmt) {
   return rows
 }
 
+// Page keys step six rows, which can be more than a short or filtered list
+// holds, and `%` keeps the sign of the dividend, so bring the remainder back
+// into range instead of leaving an index that selects no row.
+function moveSelection(index, delta, count) {
+  if (count === 0) return 0
+  return ((index + delta) % count + count) % count
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     normalizeEntry: normalizeEntry,
@@ -234,6 +242,7 @@ if (typeof module !== "undefined") {
     filePaths: filePaths,
     fileEntryText: fileEntryText,
     fullText: fullText,
-    displayRows: displayRows
+    displayRows: displayRows,
+    moveSelection: moveSelection
   }
 }

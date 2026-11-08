@@ -149,6 +149,8 @@ assert(
   hugeFileRow.entryType === 'file' && hugeFileRow.fullText.split('\n').every(path => path.endsWith('.mp4')),
   'clipboard display rows cap a huge file list without truncating a path'
 )
+
+assertDeepEqual(clipboard.moveSelection(0, -6, 4), 2, 'clipboard PageUp in a short list lands on a row')
 JS
 
 TMPDIR=$(mktemp -d)
