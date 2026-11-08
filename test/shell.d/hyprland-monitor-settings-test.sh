@@ -126,6 +126,20 @@ check(#applied == 0, "leaves a monitor already turned as saved alone")
 ' || fail "monitor settings apply a saved rotation"
 pass "monitor settings apply a saved rotation"
 
+# Extend ends a mirror with a reload, and while that config loads the monitor
+# still mirrors, so it isn't listed. Once it's back, at whatever scale and place
+# Hyprland gave it, it gets its own.
+printf '%s\t%s\t%s\t%s\t%s\n' "3840x2160@60" "-2400x0" "1.6" "" "Dell Inc. DELL U2723QE" >"$settings"
+run_lua '
+plug("eDP-1", "LG Display 0x0804", { width = 2880, height = 1800, refresh_rate = 120, scale = 2, x = 0, y = 0 })
+load_module()
+plug("DP-1", "Dell Inc. DELL U2723QE", { width = 3840, height = 2160, refresh_rate = 60, scale = 1.5, x = 1440, y = 0 })
+handlers["config.reloaded"]()
+check(#applied == 1 and applied[1].output == "DP-1" and applied[1].scale == 1.6 and applied[1].position == "-2400x0",
+  "applies the settings of a monitor that stopped mirroring")
+' || fail "monitor settings apply once a reload ends a mirror"
+pass "monitor settings apply once a reload ends a mirror"
+
 # Switched off in monitors.lua, the saved settings are left alone entirely.
 printf '%s\t%s\t%s\t%s\n' "1920x1200@60" "0x0" "1" "LG Display 0x0804" >"$settings"
 run_lua '

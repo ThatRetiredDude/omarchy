@@ -10,8 +10,9 @@
 --
 -- Applied while the config loads, after hypr/monitors.lua, so a choice made in
 -- the panel wins over a rule written there and a reload settles on it in one
--- go. Applied again when a monitor arrives, skipping one that already runs as
--- saved, so plugging it back in doesn't reconfigure it for nothing.
+-- go. Applied again when a monitor arrives or a reload ends its mirroring,
+-- skipping one that already runs as saved, so plugging it back in doesn't
+-- reconfigure it for nothing.
 --
 -- Setting omarchy_monitor_panel_settings = false in hypr/monitors.lua leaves
 -- that file alone in charge, GDK_SCALE included.
@@ -153,6 +154,13 @@ end)
 
 hl.on("monitor.added", function(monitor)
   M.apply(false, monitor and monitor.name)
+end)
+
+-- A reload that ends a mirror, as Extend does, brings the monitor back only
+-- once the config has loaded: until then it still mirrors and isn't listed,
+-- and no monitor.added follows.
+hl.on("config.reloaded", function()
+  M.apply(false)
 end)
 
 o.monitor_settings = M
