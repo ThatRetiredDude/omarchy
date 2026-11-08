@@ -85,6 +85,13 @@ clamshell='[
   { "name": "DP-1", "mirrorOf": "none", "disabled": false, "focused": true, "width": 2560, "height": 1440 }
 ]'
 
+# A monitor kept off in monitors.lua still shows in `monitors all`, but the
+# mirror command only mirrors onto monitors that are on.
+external_off='[
+  { "name": "eDP-1", "mirrorOf": "none", "disabled": false, "focused": true, "width": 1920, "height": 1080 },
+  { "name": "DP-1", "mirrorOf": "none", "disabled": true, "focused": false, "width": 0, "height": 0 }
+]'
+
 monitor_state "$extended"
 assert_line_count "monitor state answers every line while extended"
 assert_line 0 42 "monitor state reports brightness"
@@ -118,6 +125,11 @@ assert_line 1 eDP-1 "monitor state still names a disabled internal monitor"
 assert_line 3 "" "monitor state reports the internal monitor disabled"
 assert_line 4 "" "monitor state reports no mirror while clamshelled"
 pass "monitor state separates a disabled internal monitor from a missing one"
+
+monitor_state "$external_off"
+assert_line_count "monitor state answers every line with the external monitor off"
+assert_line 2 "" "monitor state reports no external monitor when the only one is off"
+pass "monitor state names only an external monitor that's on"
 
 displays_are() {
   jq -e --argjson expected "$1" 'map({name, enabled, focused, width, height}) == $expected' <<<"${state_lines[7]-}" >/dev/null ||
