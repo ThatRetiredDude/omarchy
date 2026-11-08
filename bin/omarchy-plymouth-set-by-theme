@@ -14,7 +14,8 @@ fi
 
 theme=$1
 
-theme_dir=$(omarchy-theme-dir "$theme")
+colors=$(omarchy-theme-dir "$theme" colors.toml)
+logo=$(omarchy-theme-dir "$theme" unlock.png)
 
 theme_color() {
   local key="$1"
@@ -44,10 +45,10 @@ theme_color() {
     END {
       if (!found && fallback_value != "") print fallback_value
     }
-  ' "$theme_dir/colors.toml"
+  ' "$colors"
 }
 
 bg=$(theme_color background)
 text=$(theme_color foreground)
 
-exec omarchy-plymouth-set "$bg" "$text" "$theme_dir/unlock.png"
+exec omarchy-plymouth-set "$bg" "$text" "$logo"

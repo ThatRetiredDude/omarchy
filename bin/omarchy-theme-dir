@@ -1,18 +1,26 @@
 #!/bin/bash
 
-# omarchy:summary=Print the directory holding a theme, preferring a user-installed copy
-# omarchy:args=<theme-name>
-# omarchy:examples=omarchy theme dir tokyo-night
+# omarchy:summary=Print the path of a theme or one of its files, preferring the user's copy
+# omarchy:args=<theme-name> [file]
+# omarchy:examples=omarchy theme dir tokyo-night | omarchy theme dir tokyo-night unlock.png
 
 theme="${1:-}"
+file="${2:-}"
 
 if [[ -z $theme ]]; then
-  echo "Usage: omarchy-theme-dir <theme-name>" >&2
+  echo "Usage: omarchy-theme-dir <theme-name> [file]" >&2
   exit 1
 fi
 
-if [[ -d $HOME/.config/omarchy/themes/$theme ]]; then
-  echo "$HOME/.config/omarchy/themes/$theme"
+user_dir="$HOME/.config/omarchy/themes/$theme"
+stock_dir="$OMARCHY_PATH/themes/$theme"
+
+# omarchy-theme-set lays a user theme over the stock theme of the same name, so
+# a file the user's copy leaves out still comes from the stock one.
+if [[ -n $file && ! -e $user_dir/$file && -e $stock_dir/$file ]]; then
+  echo "$stock_dir/$file"
+elif [[ -d $user_dir ]]; then
+  echo "$user_dir${file:+/$file}"
 else
-  echo "$OMARCHY_PATH/themes/$theme"
+  echo "$stock_dir${file:+/$file}"
 fi

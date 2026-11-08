@@ -183,6 +183,31 @@ run_unlock_action "default"
 
 pass "the unlock picker still applies a theme and still resets on default"
 
+# omarchy-theme-set lays ~/.config/omarchy/themes/<name> over the stock theme of
+# the same name, so an overlay holding only colors.toml still has the stock
+# unlock images, and Appearance > Unlock has to find them there too.
+overlay_home="$test_tmp/overlay-home"
+mkdir -p "$overlay_home/.config/omarchy/themes/tokyo-night"
+printf 'background = "#010203"\nforeground = "#040506"\n' >"$overlay_home/.config/omarchy/themes/tokyo-night/colors.toml"
+
+publisher_stub_dir="$test_tmp/publisher-stub"
+mkdir -p "$publisher_stub_dir"
+cat >"$publisher_stub_dir/omarchy-plymouth-set" <<'STUB'
+#!/bin/bash
+printf '%s\n' "$@"
+STUB
+chmod +x "$publisher_stub_dir/omarchy-plymouth-set"
+
+unlock_themes=$(HOME="$overlay_home" PATH="$ROOT/bin:$PATH" "$ROOT/bin/omarchy-plymouth-list")
+grep -qx tokyo-night <<<"$unlock_themes" ||
+  fail "a colors-only overlay keeps its stock theme under Appearance > Unlock" "$unlock_themes"
+
+output=$(HOME="$overlay_home" PATH="$publisher_stub_dir:$ROOT/bin:$PATH" "$ROOT/bin/omarchy-plymouth-set-by-theme" tokyo-night 2>&1)
+[[ $output == $'#010203\n#040506\n'"$ROOT/themes/tokyo-night/unlock.png" ]] ||
+  fail "the overlay's colors reach the unlock screen with the stock logo" "$output"
+
+pass "an overlay on a stock theme keeps its unlock screen"
+
 fake_bin="$test_tmp/bin"
 root_tools="$test_tmp/root-tools"
 stages="$test_tmp/stages"
