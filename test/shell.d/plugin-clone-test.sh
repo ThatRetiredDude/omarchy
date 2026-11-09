@@ -141,6 +141,17 @@ clone_plugin omarchy.tray >/dev/null
   fail "tray clone is missing its model"
 pass "flat bar plugins keep local script dependencies"
 
+# A plugin folder that imports a script from outside itself declares it, so
+# every relative import in the clone still resolves inside the clone.
+clone_plugin omarchy.agents >/dev/null
+agents="$TMPDIR/home/.config/omarchy/plugins/tester.agents"
+while IFS=: read -r file import; do
+  resolved=$(realpath -m "$(dirname "$file")/$import")
+  [[ $resolved == "$agents/"* && -e $resolved ]] ||
+    fail "agents clone imports $import from outside the clone"
+done < <(rg -o --no-heading --no-line-number --with-filename -r '$1' '^import "([^"]+)"' "$agents" -g '*.qml')
+pass "plugin folders carry the scripts they import from outside themselves"
+
 clone_plugin omarchy.bar >/dev/null
 grep -qx 'omarchy-plugin-enable tester.bar' "$CALLS" ||
   fail "clone does not select a cloned bar"

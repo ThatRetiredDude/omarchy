@@ -17,13 +17,17 @@ copy_plugin() {
   local source_dir="$1"
   local manifest="$2"
   local target_dir="$3"
+  # A plugin folder is copied whole, and a plugin from a sibling manifest gets
+  # its entry points. Either one also gets the clonePaths it declares, such as a
+  # script it imports from outside the folder.
+  local paths='.omarchy.clonePaths[]? | {source: .source, target: .target}'
 
   if [[ ${manifest##*/} == "manifest.json" ]]; then
     cp -aL "$source_dir/." "$target_dir/"
-    return
+  else
+    cp -aL "$manifest" "$target_dir/manifest.json"
+    paths="(.entryPoints[] | {source: ., target: .}), ($paths)"
   fi
-
-  cp -aL "$manifest" "$target_dir/manifest.json"
 
   local source target source_pattern file
   while IFS=$'\t' read -r source target; do
@@ -42,12 +46,7 @@ copy_plugin() {
         sed -i "s|$source_pattern|$target|g" "$file"
       done < <(rg --files-with-matches --null --fixed-strings "$source" "$target_dir")
     fi
-  done < <(jq -r '
-    [
-      (.entryPoints[] | {source: ., target: .}),
-      (.omarchy.clonePaths[]? | {source: .source, target: .target})
-    ] | unique_by(.target)[] | [.source, .target] | @tsv
-  ' "$manifest")
+  done < <(jq -r "[$paths] | unique_by(.target)[] | [.source, .target] | @tsv" "$manifest")
 }
 
 update_manifest() {

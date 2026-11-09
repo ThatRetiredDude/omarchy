@@ -11,6 +11,14 @@
   "entryPoints": {
     "barWidget": "Panel.qml"
   },
+  "omarchy": {
+    "clonePaths": [
+      {
+        "source": "../panels/elsewhen/Model.js",
+        "target": "Reorder.js"
+      }
+    ]
+  },
   "barWidget": {
     "displayName": "Agents",
     "description": "One bar icon and one panel: rate-limit meters with pace, today, the last week, and the all-time model breakdown for every subscription.",
