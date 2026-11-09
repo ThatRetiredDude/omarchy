@@ -46,7 +46,15 @@ Item {
 
   function isHiddenEntry(entry) {
     var id = String((entry && entry.id) || "")
-    return root.configuredHiddenEntryIds[id] === true || root.desktopHiddenEntryIds[id] === true
+    return root.configuredHiddenEntryIds[id] === true || root.desktopHiddenEntryIds[id] === true || root.isElectronRuntime(id)
+  }
+
+  // Each Electron runtime (electron, electron39, electron43...) installs a
+  // launcher that opens only Electron's blank default app. Apps like Obsidian
+  // pull a new one in whenever they move to a newer Electron, so they are
+  // matched by name instead of listed one version at a time in launcher.hides.
+  function isElectronRuntime(id) {
+    return /^electron[0-9]*$/.test(id)
   }
 
   function sortedEntries(query) {

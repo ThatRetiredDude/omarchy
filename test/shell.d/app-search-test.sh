@@ -61,6 +61,13 @@ for (const query of ['', 'hermes']) {
   assertDeepEqual(visible.map(row => row.entry.id), ['hermes-desktop'], 'only the packaged Hermes launcher is visible')
 }
 
+// Electron runtimes come and go with the apps that need them, so every version
+// stays out of the list, while apps that only share the name stay in it.
+const library = fs.readFileSync(path.join(root, 'shell/services/AppLibrary.qml'), 'utf8')
+const isElectronRuntime = new Function(library.match(/function isElectronRuntime\([^]*?\n  \}/)[0] + '\nreturn isElectronRuntime')()
+assert(['electron', 'electron39', 'electron43'].every(isElectronRuntime), 'every Electron runtime launcher is hidden')
+assert(!['electron-mail', 'obsidian'].some(isElectronRuntime), 'apps named after Electron stay listed')
+
 const contactMatches = search.sortedEntries(entries, 'contact').map(row => search.entryName(row.entry))
 assertDeepEqual(contactMatches, ['Google Contacts'], 'contact search only returns direct contact matches')
 

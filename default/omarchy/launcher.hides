@@ -5,9 +5,6 @@ bvnc
 cmake-gui
 cups
 dropbox
-electron34
-electron36
-electron37
 fcitx5-configtool
 fcitx5-wayland-launcher
 foot-server
