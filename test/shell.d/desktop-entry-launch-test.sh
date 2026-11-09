@@ -70,7 +70,22 @@ assert_detached_installer_launch() {
 }
 
 assert_detached_installer_launch omarchy-install-editor-emacs emacsclient
+
+# VS Code's files can already hold the user's own settings, from an earlier
+# install or a dotfiles link, so the installer adds its keys instead.
+mkdir -p "$test_home/.vscode" "$test_home/.config/Code/User"
+printf '{\n  "locale": "de"\n}\n' >"$test_home/.vscode/argv.json"
+printf '{\n  "editor.fontSize": 16\n}\n' >"$test_tmp/dotfiles-settings.json"
+ln -s "$test_tmp/dotfiles-settings.json" "$test_home/.config/Code/User/settings.json"
 assert_detached_installer_launch omarchy-install-editor-vscode code
+[[ -L $test_home/.config/Code/User/settings.json ]] &&
+  grep -q '"editor.fontSize": 16' "$test_tmp/dotfiles-settings.json" &&
+  grep -q '"update.mode": "none"' "$test_tmp/dotfiles-settings.json" &&
+  grep -q '"locale": "de"' "$test_home/.vscode/argv.json" &&
+  grep -q '"password-store": "gnome-libsecret"' "$test_home/.vscode/argv.json" ||
+  fail "omarchy-install-editor-vscode adds its keys to the user's existing VS Code settings"
+pass "omarchy-install-editor-vscode keeps the user's existing VS Code settings"
+
 assert_detached_installer_launch omarchy-install-editor-zed dev.zed.Zed
 assert_detached_installer_launch omarchy-install-gaming-heroic heroic
 assert_detached_installer_launch omarchy-install-gaming-steam steam
