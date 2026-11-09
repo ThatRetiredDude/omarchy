@@ -109,6 +109,20 @@ assert(menu.isVisible(visibilityItems, visibilityOrder, { 'hardware.laptop': tru
 assert(!menu.isVisible(visibilityItems, visibilityOrder, { 'nested.branch.leaf': false }, visibilityItems.nested), 'menu hides recursively empty submenus')
 assert(menu.isVisible(visibilityItems, visibilityOrder, {}, visibilityItems.dynamic), 'menu keeps provider-backed submenus visible')
 
+// Search lists a hidden submenu's rows only from inside it: a failed `when:` on
+// Dock hides Dock Position's rows too, unless a summon opened Dock itself.
+const topDock = menu.normalizeItem('appearance.dock.position.top', { label: 'Top Dock', action: 'omarchy-dock position top' })
+const dockItems = {
+  appearance: menu.normalizeItem('appearance', { label: 'Appearance' }),
+  'appearance.dock': menu.normalizeItem('appearance.dock', { label: 'Dock', when: 'is-floating' }),
+  'appearance.dock.position': menu.normalizeItem('appearance.dock.position', { label: 'Dock Position' }),
+  'appearance.dock.position.top': topDock
+}
+const dockOrder = Object.keys(dockItems)
+assert(!menu.isSearchable(dockItems, dockOrder, { 'appearance.dock': false }, topDock, 'root'), 'menu search skips rows under a submenu its when: hid')
+assert(menu.isSearchable(dockItems, dockOrder, { 'appearance.dock': false }, topDock, 'appearance.dock'), 'menu search inside a hidden submenu still finds its rows')
+assert(menu.isSearchable(dockItems, dockOrder, {}, topDock, 'root'), 'menu search finds rows before the guards have answered')
+
 // `disabled:` is the softer guard: the row stays listed and only loses the
 // cursor, which is how an already-installed app keeps its place in Install.
 const installed = menu.normalizeItem('install.browser.zen', { label: 'Zen', disabled: 'omarchy-pkg-present zen-browser-bin', action: 'install-zen' })

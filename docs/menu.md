@@ -93,7 +93,8 @@ The three guards differ in what failure means:
 
 - `when` hides the row when it fails. A submenu whose visible descendants
   are all hidden disappears with them (provider-backed submenus stay, since
-  their rows load on demand).
+  their rows load on demand). A submenu its own `when` hides also keeps every
+  row under it out of search, unless that submenu is the one open.
 - `checked` appends ✓ when it succeeds — the "this is the current choice"
   marker on defaults, DNS, channel rows.
 - `disabled` keeps the row listed but dims it, marks it ✓, and makes it

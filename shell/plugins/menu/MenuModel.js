@@ -297,6 +297,25 @@ function isVisible(items, itemOrder, whenResults, entry, depth) {
   return false
 }
 
+// Browsing reaches a row only through its submenus, so a submenu whose `when:`
+// failed hides everything under it. Search lists every row below the open menu
+// at once, so it checks the submenus in between as well. The open menu itself
+// doesn't count: a summon can open a hidden submenu directly, and its rows are
+// where the user already is.
+function isSearchable(items, itemOrder, whenResults, entry, activeId) {
+  if (!isVisible(items, itemOrder, whenResults, entry)) return false
+
+  var current = item(items, entry.parent)
+  var guard = 0
+  while (current && current.id !== activeId && current.id !== "root" && guard < 32) {
+    if (current.when && whenResults && whenResults[current.id] === false) return false
+    current = item(items, current.parent)
+    guard += 1
+  }
+
+  return true
+}
+
 // A `disabled:` row stays listed but goes dim and unselectable. The
 // Install submenus use it so software already on the machine reads as
 // installed rather than disappearing from the list it was installed from.
@@ -706,6 +725,7 @@ if (typeof module !== "undefined") {
     isDescendantOf: isDescendantOf,
     childCount: childCount,
     isVisible: isVisible,
+    isSearchable: isSearchable,
     isDisabled: isDisabled,
     labelFor: labelFor,
     searchableToken: searchableToken,
