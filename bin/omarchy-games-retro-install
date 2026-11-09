@@ -19,7 +19,7 @@ if (( $# == 0 )); then
   core="${core##*(}"
   core="${core%)}"
 
-  game_path=$(omarchy-menu-file "$(omarchy-i18n games.pickGame)" "$HOME/Games/roms" "7z bin ccd chd cue dmg elf fds gb gba gbc iso lha m3u md n64 nds nes pbp sfc smc swc zip z64") || exit 0
+  game_path=$(omarchy-menu-file "$(omarchy-i18n games.pickGame)" "$HOME/Games/roms" "7z adf adz bin bs ccd cdi cdt chd ciso cpr crt cso cue d64 d71 d81 dmg dms dsk elf fds fig g64 gb gba gbc gcm gcz gdi gen gg hdf hdz ipf iso lha m3u md mds n64 nds nes p00 pbp pce prg rvz sfc sg sgx smc smd sms sna swc t64 tap toc unf unif v64 wad wbfs wia x64 z64 zip") || exit 0
   [[ -n $game_path ]] || exit 0
 elif (( $# == 2 )); then
   core="$1"
