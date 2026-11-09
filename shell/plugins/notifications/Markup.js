@@ -130,18 +130,22 @@ function identify(row) {
 }
 
 // Group on the app's own name, not the desktop-entry hint: Chrome puts a
-// per-session temp path there.
+// per-session temp path there. Letters past ASCII stay, so 微信 and Почта are
+// two apps rather than one with no name.
 function slug(text) {
-  return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+  return String(text || "").toLowerCase().replace(/[^a-z0-9\u0080-\uffff]+/g, "-").replace(/^-|-$/g, "")
 }
 
 // The group key, rebuilt from a row's fields: per site for a browser,
 // otherwise per app. An unnamed sender is no app, so each of its toasts stands
 // alone: first login's keybindings, git and update toasts are three, not a deck.
+// So is a sender with no name at all, which is every app that notifies through
+// the desktop portal (the GTK portal sends an empty app name).
 function regroup(row) {
   var app = String(row.app || "")
   var source = String(row.source || "")
-  if (app === "omarchy-action" || app === "notify-send") return "toast:" + String(row.key || "")
+  var name = slug(app)
+  if (!name || app === "omarchy-action" || app === "notify-send") return "toast:" + String(row.key || "")
   if (isBrowser(app) && source && source !== app && hostname(source)) return "web:" + hostname(source)
-  return "app:" + slug(app)
+  return "app:" + name
 }

@@ -98,9 +98,12 @@ for (let i = 0; i < 1000; i++) {
   // A restored row cannot claim a site either unless it came from a browser.
   assert.equal(Store.restored({ key: 'r', app: 'Chat', source: 'bank.example' }).groupKey, 'app:chat')
   assert.equal(Store.restored({ key: 'r', app: 'Chromium', source: 'app.slack.com' }).groupKey, 'web:app.slack.com')
-  // An unnamed sender's toasts each stand alone rather than stacking.
-  for (const app of ['omarchy-action', 'notify-send'])
+  // An unnamed sender's toasts each stand alone rather than stacking; '' is the desktop portal.
+  for (const app of ['omarchy-action', 'notify-send', ''])
     assert.notEqual(Store.restored({ key: 'a', app }).groupKey, Store.restored({ key: 'b', app }).groupKey, app)
+  // Names in other scripts are apps of their own, and one app's cards still stack.
+  assert.notEqual(Store.restored({ key: 'a', app: '微信' }).groupKey, Store.restored({ key: 'b', app: 'Почта' }).groupKey)
+  assert.equal(Store.restored({ key: 'a', app: 'Почта' }).groupKey, Store.restored({ key: 'b', app: 'Почта' }).groupKey)
 }
 
 { // `-i name` is an icon name, not a picture; only the strict charset is kept.
