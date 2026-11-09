@@ -68,8 +68,26 @@ if [[ -z $id ]]; then
 fi
 valid_plugin_id "$id" || fail "invalid plugin id '$id'"
 
-target="$PLUGINS_DIR/$id"
-[[ -e $target || -L $target ]] || fail "plugin '$id' is not installed"
+# The shell knows a plugin by its manifest id and its files live in its folder,
+# which need not have the same name: a package can link its plugin in under a
+# name of its own. Take either one and look up the other.
+folder="$id"
+if [[ -e $PLUGINS_DIR/$folder || -L $PLUGINS_DIR/$folder ]]; then
+  manifest_id=$(jq -r '.id // empty' "$PLUGINS_DIR/$folder/manifest.json" 2>/dev/null || true)
+  if valid_plugin_id "$manifest_id"; then
+    id="$manifest_id"
+  fi
+else
+  folder=""
+  for manifest in "$PLUGINS_DIR"/*/manifest.json; do
+    if [[ $(jq -r '.id // empty' "$manifest" 2>/dev/null) == "$id" ]]; then
+      folder=$(basename "$(dirname "$manifest")")
+      break
+    fi
+  done
+  [[ -n $folder ]] || fail "plugin '$id' is not installed"
+fi
+target="$PLUGINS_DIR/$folder"
 
 was_enabled=""
 shell_plugins=$(omarchy-shell shell listPlugins)
@@ -103,7 +121,7 @@ elif [[ -d $target/.git ]]; then
   rm -rf "$target"
   echo "Removed $id."
 else
-  base="$PLUGINS_DIR/.${id}.bak.$(date -u +%Y%m%d%H%M%S)"
+  base="$PLUGINS_DIR/.${folder}.bak.$(date -u +%Y%m%d%H%M%S)"
   backup="$base"
   n=1
   while [[ -e $backup ]]; do

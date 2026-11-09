@@ -118,6 +118,22 @@ grep -q 'Restored omarchy.menu.' <<<"$remove_output" ||
   fail "removing a clone does not report its restored source"
 pass "removing an enabled clone goes through plugin disable and reports its source"
 
+# A plugin's folder need not be named after its id. Removing it by either name
+# finds the other, so the plugin is disabled before its folder goes.
+panel="$TMPDIR/home/.config/omarchy/plugins/tester-panel"
+for name in tester.panel tester-panel; do
+  mkdir -p "$panel/.git"
+  printf '{"id": "tester.panel", "kinds": ["bar-widget"]}\n' >"$panel/manifest.json"
+  : >"$TMPDIR/remove-calls"
+  HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" PATH="$TMPDIR/bin:$ROOT/bin:$PATH" \
+    FAKE_CALLS="$TMPDIR/remove-calls" OMARCHY_TEST_ROOT="$ROOT" \
+    omarchy-plugin-remove "$name" --yes >/dev/null || fail "remove does not find tester-panel by $name"
+  grep -qx 'omarchy-shell shell setPluginEnabled tester.panel false' "$TMPDIR/remove-calls" ||
+    fail "removing tester-panel by $name does not disable tester.panel first"
+  [[ ! -e $panel ]] || fail "removing tester-panel by $name leaves its folder"
+done
+pass "remove takes a plugin's id or its folder name"
+
 clone_plugin omarchy.active-window >/dev/null
 [[ -f $TMPDIR/home/.config/omarchy/plugins/tester.active-window/ActiveWindow.qml ]] ||
   fail "flat bar plugin clone is incomplete"
