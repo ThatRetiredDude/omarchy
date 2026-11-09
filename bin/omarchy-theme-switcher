@@ -58,8 +58,15 @@ for theme_dir in "$USER_THEMES_PATH" "$OMARCHY_THEMES_PATH"; do
   if [[ -d $theme_dir ]]; then
     fast_signature+="$theme_dir:$(stat -Lc '%Y' "$theme_dir")"$'\n'
 
+    # A theme with no preview file shows its first background, and a theme
+    # update that renames or adds one changes backgrounds/ but not the theme
+    # folder, so backgrounds/ counts too. One stat covers both.
     while IFS= read -r -d '' theme_path; do
-      fast_signature+="$theme_path:$(stat -Lc '%Y' "$theme_path")"$'\n'
+      if [[ -d $theme_path/backgrounds ]]; then
+        fast_signature+="$(stat -Lc '%n:%Y' "$theme_path" "$theme_path/backgrounds")"$'\n'
+      else
+        fast_signature+="$theme_path:$(stat -Lc '%Y' "$theme_path")"$'\n'
+      fi
     done < <(find -L "$theme_dir" -mindepth 1 -maxdepth 1 \( -type d -o -type l \) -print0 2>/dev/null | sort -z)
   fi
 done
