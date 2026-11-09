@@ -79,6 +79,10 @@ for (let i = 0; i < 1000; i++) {
   assert.ok(!/<(?:img|script|iframe|object|svg)\b/i.test(M.render(s)))
 }
 
+// A code is read whole where its keyword's window starts or ends inside it.
+for (const body of ['482913 is your Instagram code', 'Your code to finish signing in to your Microsoft account in this browser is 482913'])
+  assert.equal(D.scan('', body).codes, '482913', body)
+
 // ------------------------------------------------------------------ identity
 { // Only a browser's leading origin anchor names a site; only an http(s) href
   // can be that origin; a label never stands in for it.

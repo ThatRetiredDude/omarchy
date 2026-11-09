@@ -39,10 +39,22 @@ function windows(t) {
   return out.slice(0, Security.MAX_CODES)
 }
 
-function harvest(t, re, seen, out, keep) {
+// Whether the characters from..to overlap a keyword's window.
+function near(spans, from, to) {
+  for (var i = 0; i < spans.length; i++)
+    if (from < spans[i][1] && to > spans[i][0]) return true
+  return false
+}
+
+// Codes are matched across the whole text and the windows only say which are
+// near a keyword. Matching inside a window would cut a code its edge runs
+// through: "482913 is your Instagram code" starts before its window does.
+function harvest(t, spans, re, seen, out, keep) {
   var m
   re.lastIndex = 0
   while ((m = re.exec(t)) !== null) {
+    var end = m.index + m[0].length
+    if (!near(spans, end - m[1].length, end)) continue
     var value = keep(m[1])
     if (!value || seen[value]) continue
     seen[value] = true
@@ -56,22 +68,18 @@ function codes(text) {
   if (!spans.length) return []
 
   var out = [], seen = {}
-  for (var i = 0; i < spans.length; i++) {
-    harvest(t.slice(spans[i][0], spans[i][1]), CODE_SHAPE, seen, out, function (raw) {
-      var value = raw.replace(/^[A-Za-z]-/, "").replace(/[\s-]/g, "")
-      if (value.length < 4 || value.length > 8) return ""
-      if (/^(19|20)\d\d$/.test(value)) return ""      // a year
-      return value
-    })
-  }
+  harvest(t, spans, CODE_SHAPE, seen, out, function (raw) {
+    var value = raw.replace(/^[A-Za-z]-/, "").replace(/[\s-]/g, "")
+    if (value.length < 4 || value.length > 8) return ""
+    if (/^(19|20)\d\d$/.test(value)) return ""      // a year
+    return value
+  })
   if (out.length) return out.slice(0, Security.MAX_CODES)
 
-  for (var j = 0; j < spans.length; j++) {
-    harvest(t.slice(spans[j][0], spans[j][1]), CODE_ALNUM, seen, out, function (raw) {
-      // Needs both a digit and a letter, or it is a word in caps.
-      return (/\d/.test(raw) && /[A-Z]/.test(raw)) ? raw : ""
-    })
-  }
+  harvest(t, spans, CODE_ALNUM, seen, out, function (raw) {
+    // Needs both a digit and a letter, or it is a word in caps.
+    return (/\d/.test(raw) && /[A-Z]/.test(raw)) ? raw : ""
+  })
   return out.slice(0, Security.MAX_CODES)
 }
 
