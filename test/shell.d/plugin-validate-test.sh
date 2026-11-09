@@ -115,3 +115,14 @@ output=$(validate "$dir") && fail "validate refuses an entry point file that is 
 grep -qF "entry point file not found" <<<"$output" \
   || fail "validate reports a missing file as a missing file" "$output"
 pass "validate refuses an entry point file that is not there"
+
+# The plugin folder itself may be a link, as a package or a developer's checkout
+# installs it, but nothing inside it may be.
+dir=$(write_plugin "linked" '["service"]' '{"service": "Entry.qml"}')
+ln -s "$dir" "$TMPDIR/linked-link"
+validate "$TMPDIR/linked-link" >/dev/null || fail "validate accepts a plugin folder that is itself a symlink"
+ln -s /etc/hostname "$dir/Escape.qml"
+output=$(validate "$TMPDIR/linked-link") && fail "validate refuses a symlink inside a linked plugin folder" "$output"
+grep -qF "$TMPDIR/linked-link/Escape.qml" <<<"$output" \
+  || fail "validate names the symlink inside a linked plugin folder" "$output"
+pass "validate accepts a linked plugin folder but no symlink inside it"
