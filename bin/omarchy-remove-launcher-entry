@@ -81,6 +81,14 @@ if [[ $desktop_file_name == "slack.desktop" && $exec_line =~ ^omarchy-launch-sla
   exec omarchy-launch-floating-terminal-with-presentation omarchy-remove-service-slack
 fi
 
+# The Windows VM's launcher lives in the user's folder, and Remove > Windows is
+# only offered while it exists. Deleting it alone would leave the VM and its
+# disk behind with no menu row to remove them, so run the VM's own remover,
+# which asks before it deletes anything.
+if [[ $desktop_file_name == "windows-vm.desktop" && $exec_line =~ (^|[[:space:]])omarchy-windows-vm[[:space:]]+launch($|[[:space:]]) ]]; then
+  exec omarchy-launch-floating-terminal-with-presentation "omarchy-windows-vm remove"
+fi
+
 if is_user_desktop_file; then
   display_name="${entry_name:-$desktop_name}"
   rm -f "$desktop_file"

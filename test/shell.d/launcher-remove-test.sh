@@ -104,3 +104,13 @@ DESKTOP
 [[ $(tail -1 "$TEST_LOG") == "terminal::omarchy-remove-service-slack" ]] || fail "the themed Slack launcher opens its package removal flow"
 [[ -f $tmp_dir/data/applications/slack.desktop ]] || fail "the override remains until package removal succeeds"
 pass "the themed Slack override routes to package removal before any cleanup"
+
+cat >"$tmp_dir/data/applications/windows-vm.desktop" <<'DESKTOP'
+[Desktop Entry]
+Name=Windows
+Exec=uwsm app -- omarchy-windows-vm launch
+DESKTOP
+"$ROOT/bin/omarchy-remove-launcher-entry" windows-vm Windows
+[[ $(tail -1 "$TEST_LOG") == "terminal::omarchy-windows-vm remove" ]] || fail "the Windows launcher opens the VM's removal" "$(tail -1 "$TEST_LOG")"
+[[ -f $tmp_dir/data/applications/windows-vm.desktop ]] || fail "the Windows launcher, which Remove > Windows depends on, stays until the VM is removed"
+pass "the Windows launcher routes to the VM's removal instead of deleting only itself"
