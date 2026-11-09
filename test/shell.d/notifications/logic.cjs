@@ -504,6 +504,32 @@ const summaries = rows => Array.from(rows, row => row.summary)
   assert.equal(s.leaving[s.toasts.get(0).key], 'activated')
 }
 
+{ // Only a browser card has a site to open. A script named like a host (backup.sh) has none.
+  const s = newCapacityScope()
+  const opened = [], ran = []
+  s.Security = { ...S, openExternalUrl: url => { opened.push(url); return true } }
+  s.Util = { execArgv: argv => ran.push(argv) }
+  s.Hyprland.toplevels = { values: [] }
+  s.windowForSource = () => null
+  const script = s.fakeNotification(1)
+  script.appName = 'backup.sh'
+  script.actions = []
+  s.admit(script)
+  assert.equal(s.clickable(s.toasts.get(0).key), false, 'a card from a script named backup.sh has no site to open')
+  s.activate(s.toasts.get(0).key)
+  assert.deepEqual(opened, [], 'a click on a card from backup.sh opens no https://backup.sh/')
+  assert.deepEqual(ran.map(argv => Array.from(argv)), [['omarchy-hyprland-focus-app', 'backup.sh']], 'it focuses the app by name instead')
+
+  const web = s.fakeNotification(2)
+  web.appName = 'Google Chrome'
+  web.body = '<a href="https://mail.example.com/">mail.example.com</a> New message'
+  web.actions = []
+  s.admit(web)
+  assert.equal(s.clickable(s.toasts.get(0).key), true)
+  s.activate(s.toasts.get(0).key)
+  assert.deepEqual(opened, ['https://mail.example.com/'], "a browser card still opens its site")
+}
+
 { // A clicked card rises out before it goes; a keypress clears every card with one jump.
   const s = newCapacityScope()
   s.admit(...[1, 2, 3].map(id => s.fakeNotification(id)))

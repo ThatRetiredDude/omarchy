@@ -145,3 +145,12 @@ function regroup(row) {
   if (isBrowser(app) && source && source !== app && hostname(source)) return "web:" + hostname(source)
   return "app:" + slug(app)
 }
+
+// The site a card came from, as regroup() reads it: the host a browser lifted
+// out of its body. Any other sender's source is its app name, which can look
+// like a host (backup.sh, org.telegram.desktop) without naming a site.
+function site(row) {
+  var app = String(row.app || "")
+  var source = String(row.source || "")
+  return isBrowser(app) && source && source !== app ? hostname(source) : ""
+}
