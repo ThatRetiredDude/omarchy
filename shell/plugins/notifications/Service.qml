@@ -880,7 +880,7 @@ Item {
     var actions = (ref && ref.actions) || []
     for (var i = 0; i < Math.min(actions.length, Security.MAX_ACTIONS); i++)
       if (String(actions[i].identifier) === "default") return true
-    return !!(windowForPid(row.senderPid) || Markup.hostname(row.source) || String(row.link || ""))
+    return !!(windowForPid(row.senderPid) || Markup.site(row) || String(row.link || ""))
   }
 
   // What the sender said can be done with this notification. A restored row
@@ -1086,8 +1086,8 @@ Item {
       // Slack notification, and that link is clickable in its text.
       var win = windowForPid(row.senderPid) || windowForSource(row.source)
       if (win) focusWindow(win)
-      else if (Markup.hostname(row.source))
-        Security.openExternalUrl("https://" + Markup.hostname(row.source) + "/")
+      else if (Markup.site(row))
+        Security.openExternalUrl("https://" + Markup.site(row) + "/")
       else if (String(row.link || "")) Security.openExternalUrl(String(row.link))
       else if (String(row.app || "")) Util.execArgv(["omarchy-hyprland-focus-app", String(row.app)])
     }
