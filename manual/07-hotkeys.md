@@ -122,6 +122,7 @@ Resize shortcuts use physical keys `code:20` and `code:21` (XKB `<AE11>` and `<A
 | `Alt + Brightness Up/Down` | Precise 1% brightness changes |
 | `Alt + Volume Up/Down` | Precise 1% volume changes |
 | `Keyboard Brightness Up/Down` | Keyboard backlight brighter/dimmer |
+| `Ctrl + Brightness Up/Down` | Keyboard backlight brighter/dimmer, for keyboards without backlight keys (like a MacBook's) |
 | `Keyboard Backlight` | Cycle the keyboard backlight levels |
 | `Alt + Play` | Next track |
 | `Alt + Shift + Play` | Previous track |
