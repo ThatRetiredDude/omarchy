@@ -61,3 +61,22 @@ for installer in omarchy-install-gaming-lutris omarchy-install-gaming-battlenet;
     fail "$installer installs no dependencies after GPU library failure" "$(<"$test_tmp/calls")"
   pass "$installer stops before dependency installation when GPU library installation fails"
 done
+
+# Battle.net launches through the umu-launcher that Lutris also installs, so
+# removing Lutris keeps it and its runtime while Battle.net's prefix is there.
+cat >"$stub_bin/omarchy-pkg-drop" <<'SH'
+#!/bin/bash
+printf 'drop %s\n' "$*" >>"$OMARCHY_TEST_CALLS"
+SH
+chmod +x "$stub_bin/omarchy-pkg-drop"
+mkdir -p "$test_home/.local/share/umu"
+run_installer omarchy-remove-gaming-lutris 0 ||
+  fail "omarchy-remove-gaming-lutris completes with stubbed dependencies" "$(<"$test_tmp/output")"
+[[ $(<"$test_tmp/calls") != *umu-launcher* && -d $test_home/.local/share/umu ]] ||
+  fail "removing Lutris keeps umu-launcher while Battle.net is installed" "$(<"$test_tmp/calls")"
+rm -rf "$test_home/Games/battlenet"
+run_installer omarchy-remove-gaming-lutris 0 ||
+  fail "omarchy-remove-gaming-lutris completes without Battle.net" "$(<"$test_tmp/output")"
+[[ $(<"$test_tmp/calls") == *umu-launcher* && ! -d $test_home/.local/share/umu ]] ||
+  fail "removing Lutris drops umu-launcher when Battle.net is not installed" "$(<"$test_tmp/calls")"
+pass "removing Lutris keeps umu-launcher only while Battle.net uses it"
