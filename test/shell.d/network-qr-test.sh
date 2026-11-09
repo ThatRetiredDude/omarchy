@@ -107,6 +107,13 @@ run_success_case \
   'WIFI:T:nopass;S:Cafe Open;P:;;' \
   --meta wlan0
 
+# Enhanced Open has a security setting, key-mgmt "owe", but no password.
+run_success_case \
+  "network QR helper shares Enhanced Open networks without a password" \
+  $'Cafe Enhanced\nowe\n\nno\n' \
+  'WIFI:T:nopass;S:Cafe Enhanced;P:;;' \
+  --meta wlan0
+
 run_success_case \
   "network QR helper marks hidden networks" \
   $'Hidden Network\nwpa-psk\nsecret\nyes\n' \

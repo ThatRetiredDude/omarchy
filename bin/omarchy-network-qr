@@ -61,7 +61,10 @@ escape_wifi_qr() {
   printf '%s' "$value"
 }
 
-if [[ -n $key_management && $key_management != "none" ]]; then
+# OWE (Enhanced Open) encrypts the link but has no password, so it shares as an
+# open network. Android encodes it as nopass too, and tries Enhanced Open when
+# it scans one.
+if [[ -n $key_management && $key_management != "none" && $key_management != "owe" ]]; then
   [[ -n $password ]] || { echo "Could not read the Wi-Fi password" >&2; exit 1; }
   security=WPA
 elif [[ -n $wep_key ]]; then
