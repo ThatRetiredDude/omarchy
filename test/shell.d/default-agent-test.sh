@@ -261,7 +261,8 @@ pass "user setup leaves ordinary lazy wrappers to mise"
 "$ROOT/bin/omarchy-mise-install" "$grok_package" grok
 "$ROOT/bin/omarchy-mise-install" "$omp_package" omp
 "$ROOT/bin/omarchy-mise-install" "$crush_package" crush
-touch "$test_home/.local/bin/agy" "$test_home/.local/bin/ori"
+"$ROOT/bin/omarchy-mise-install" "$agy_package" agy
+"$ROOT/bin/omarchy-mise-install" "$ori_package" ori
 omarchy-remove-preinstalls >/dev/null
 for command in agy omp ori grok crush cursor-agent muse kimi; do
   [[ ! -e $test_home/.local/bin/$command ]] || fail "Remove Preinstalls deletes the $command lazy stub"
@@ -276,6 +277,18 @@ omarchy-remove-preinstalls >/dev/null
 [[ -L $test_home/.local/bin/cursor-agent ]] || fail "Remove Preinstalls keeps an official Cursor CLI install"
 rm -f "$test_home/.local/bin/cursor-agent" "$test_home/.local/bin/cursor-agent.official"
 pass "Remove Preinstalls keeps an official Cursor CLI install"
+
+# The same goes for the paths of wrappers older releases wrote: a link or a
+# program there that is not a mise wrapper is the user's own install.
+touch "$test_home/.local/bin/gh.official"
+ln -s gh.official "$test_home/.local/bin/gh"
+printf '#!/bin/bash\necho user-hunk\n' >"$test_home/.local/bin/hunk"
+chmod +x "$test_home/.local/bin/hunk"
+omarchy-remove-preinstalls >/dev/null
+[[ -L $test_home/.local/bin/gh && $("$test_home/.local/bin/hunk") == "user-hunk" ]] ||
+  fail "Remove Preinstalls keeps the user's own installs at old wrapper paths"
+rm -f "$test_home/.local/bin/gh" "$test_home/.local/bin/gh.official" "$test_home/.local/bin/hunk"
+pass "Remove Preinstalls keeps the user's own installs at old wrapper paths"
 printf '#!/bin/bash\necho user-muse\n' >"$test_home/.local/bin/muse"
 chmod +x "$test_home/.local/bin/muse"
 omarchy-remove-preinstalls >/dev/null

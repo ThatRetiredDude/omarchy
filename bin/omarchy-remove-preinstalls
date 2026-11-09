@@ -15,10 +15,14 @@ if gum confirm --affirmative "$(omarchy-i18n common.yes)" --negative "$(omarchy-
   # Disable Omarchy's default mise tools for this user and retire their shims.
   omarchy-mise-default-tools disable || exit 1
 
-  # Remove wrappers left by older Omarchy releases.
-  rm -f ~/.local/bin/codex ~/.local/bin/claude ~/.local/bin/agy ~/.local/bin/copilot \
-       ~/.local/bin/gh ~/.local/bin/opencode ~/.local/bin/playwright ~/.local/bin/playwright-cli ~/.local/bin/pi \
-       ~/.local/bin/omp ~/.local/bin/ori ~/.local/bin/cf ~/.local/bin/grok ~/.local/bin/crush ~/.local/bin/ghui ~/.local/bin/hunk
+  # Remove wrappers left by older Omarchy releases. A tool's own installer can
+  # use the same path, so only a file that runs mise use -g is Omarchy's.
+  for command in codex claude agy copilot gh opencode playwright playwright-cli pi omp ori cf grok crush ghui hunk; do
+    if [[ -f ~/.local/bin/$command && ! -L ~/.local/bin/$command ]] &&
+      grep -q '^mise use -g ' ~/.local/bin/$command; then
+      rm -f ~/.local/bin/$command
+    fi
+  done
 
   # Preserve a user-managed Kimi launcher at the same path.
   if [[ -f ~/.local/bin/kimi && ! -L ~/.local/bin/kimi ]] &&
