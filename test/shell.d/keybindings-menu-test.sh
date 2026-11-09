@@ -275,6 +275,19 @@ grep -qP '→ Terminal\texec\tomarchy-launch-terminal$' "$tmpdir"/cache/omarchy/
   fail "a plugin iterating windows at load time does not wedge the keybindings scan (it stopped before the Terminal bind)"
 pass "a plugin iterating windows at load time does not wedge the keybindings scan"
 
+# A description can hold commas, as Super + comma's "Dismiss, invoke, or focus
+# last notification" does, and so can the command a bind runs. Neither splits
+# the row: it reads in full, and picking it runs the whole command.
+stub_hyprctl <<BINDS
+$(exec_bind 64 "SUPER + Y" "Save, then share the note" "notify-send Saved,shared")
+BINDS
+
+rm -rf "$tmpdir/cache"
+keybindings >/dev/null
+grep -qP '→ Save, then share the note\texec\tnotify-send Saved,shared$' "$tmpdir"/cache/omarchy/keybindings-*.records ||
+  fail "commas in a description or command keep the row whole" "$(cat "$tmpdir"/cache/omarchy/keybindings-*.records)"
+pass "commas in a description or command keep the row whole"
+
 # Rows show their description in the Omarchy language: a numbered one
 # matches its %1 pattern, an unknown one stays as written, and the chord
 # column and what the row runs never change.
