@@ -261,6 +261,15 @@ HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar reset
 jq -e '.bar.id == null' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
 pass "shell config resets to built-in bar option"
 
+mkdir -p "$TMPDIR/home/.config/omarchy/plugins/local.half-written"
+printf '{"id": "local.half-written",\n' >"$TMPDIR/home/.config/omarchy/plugins/local.half-written/manifest.json"
+HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar use local.demo-bar 2>/dev/null ||
+  fail "bar use loses every bar option to one unreadable plugin manifest"
+jq -e '.bar.id == "local.demo-bar"' "$TMPDIR/home/.config/omarchy/shell.json" >/dev/null
+rm -r "$TMPDIR/home/.config/omarchy/plugins/local.half-written"
+HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar reset
+pass "bar use skips a plugin manifest it cannot read"
+
 HOME="$TMPDIR/home" OMARCHY_PATH="$ROOT" omarchy-bar move omarchy.active-window right
 grep -Fqx 'shell moveBarWidget omarchy.active-window {"section":"right"}' \
   "$TMPDIR/home/.local/state/omarchy/shell-ipc-calls"

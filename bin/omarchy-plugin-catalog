@@ -21,7 +21,13 @@ done < <(find "$OMARCHY_PATH/shell/plugins" -mindepth 2 -maxdepth 4 -type f \( -
 user_dir="$HOME/.config/omarchy/plugins"
 if [[ -d $user_dir ]]; then
   while IFS= read -r manifest; do
-    paths+=("$manifest")
+    # jq stops at the first manifest it can't read, which would empty the whole
+    # catalog. The shell skips just that plugin, so skip it here too.
+    if jq -e 'type == "object"' "$manifest" >/dev/null 2>&1; then
+      paths+=("$manifest")
+    else
+      echo "omarchy-plugin-catalog: skipping $manifest, which is not a JSON object" >&2
+    fi
   done < <(find -L "$user_dir" -mindepth 2 -maxdepth 2 -type f -name manifest.json \
     ! -path "$user_dir/.*/*" 2>/dev/null | sort)
 fi
