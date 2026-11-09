@@ -23,7 +23,10 @@ ruby)
   echo -e "Removing Ruby...\n"
   mise uninstall ruby --all
   mise rm -g ruby
-  rm -f ~/.gemrc
+  # Only the ~/.gemrc that Ruby setup writes, not one the user made.
+  if [[ -f ~/.gemrc && ! -L ~/.gemrc && $(<~/.gemrc) == "gem: --no-document" ]]; then
+    rm ~/.gemrc
+  fi
   ;;
 node)
   echo -e "Removing Node.js...\n"

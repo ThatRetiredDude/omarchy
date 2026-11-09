@@ -91,3 +91,17 @@ grep -q 'uv' "$mise_log" && fail "Python removal does not remove the independent
 [[ -e $test_home/.local/bin/uv && -e $test_home/.local/bin/uvx && -e $test_home/.cargo/bin/uv ]] ||
   fail "Python removal preserves uv commands"
 pass "Python removal preserves the default uv tool"
+
+printf '#!/bin/bash\n' >"$mock_bin/omarchy-pkg-add"
+chmod +x "$mock_bin/omarchy-pkg-add"
+printf ':sources:\n- https://gems.example.com/\n' >"$test_home/.gemrc"
+cp "$test_home/.gemrc" "$test_tmp/expected-gemrc"
+bash "$ROOT/bin/omarchy-install-dev-env" ruby >/dev/null
+bash "$ROOT/bin/omarchy-remove-dev-env" ruby >/dev/null
+cmp -s "$test_home/.gemrc" "$test_tmp/expected-gemrc" || fail "Ruby setup and removal keep the user's own ~/.gemrc"
+rm "$test_home/.gemrc"
+bash "$ROOT/bin/omarchy-install-dev-env" ruby >/dev/null
+[[ $(<"$test_home/.gemrc") == "gem: --no-document" ]] || fail "Ruby setup writes a ~/.gemrc when there is none"
+bash "$ROOT/bin/omarchy-remove-dev-env" ruby >/dev/null
+[[ ! -e $test_home/.gemrc ]] || fail "Ruby removal deletes the ~/.gemrc setup wrote"
+pass "Ruby setup and removal keep the user's own ~/.gemrc"

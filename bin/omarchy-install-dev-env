@@ -36,7 +36,10 @@ ruby)
   mise settings add ruby.compile false
   mise settings add idiomatic_version_file_enable_tools ruby
   mise use --global ruby@latest
-  echo "gem: --no-document" >~/.gemrc
+  # A ~/.gemrc the user already has stays as it is.
+  if [[ ! -e ~/.gemrc && ! -L ~/.gemrc ]]; then
+    echo "gem: --no-document" >~/.gemrc
+  fi
   mise x ruby -- gem install rails --no-document
   echo -e "\nYou can now run: rails new myproject"
   ;;
