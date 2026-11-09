@@ -226,3 +226,33 @@ assert(calendar.clockNeedsSeconds("''s"), 'clock still sees seconds after an esc
 assert(!calendar.clockNeedsSeconds(''), 'clock sees no seconds in an empty format')
 assert(!calendar.clockNeedsSeconds(null), 'clock sees no seconds in a missing format')
 JS
+
+# ---- the time hotkey's notification, which tells the time the way the clock does
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/bin" "$tmp/home/.config/omarchy"
+printf '%s\n' '#!/bin/bash' 'echo "${@: -1}"' >"$tmp/bin/omarchy-notification-send"
+chmod +x "$tmp/bin/omarchy-notification-send"
+
+twelve_hour='^[[:alpha:]]+ ([1-9]|1[0-2]):[0-5][0-9] [AP]M  '
+twenty_four_hour='^[[:alpha:]]+ [0-2][0-9]:[0-5][0-9]  '
+
+while IFS='|' read -r position format vertical expected description; do
+  jq --arg position "$position" --arg format "$format" --arg vertical "$vertical" '
+    .bar.position = $position
+    | (.bar.layout[][] | select(.id == "omarchy.clock")) += {format: $format, verticalFormat: $vertical}
+  ' "$ROOT/config/omarchy/shell.json" >"$tmp/home/.config/omarchy/shell.json"
+  body=$(HOME="$tmp/home" PATH="$tmp/bin:$ROOT/bin:$PATH" "$ROOT/bin/omarchy-notification-time")
+  if [[ $expected == "12" ]]; then pattern=$twelve_hour; else pattern=$twenty_four_hour; fi
+  if [[ $body =~ $pattern ]]; then
+    pass "time notification $description"
+  else
+    fail "time notification $description" "got [$body]"
+  fi
+done <<'CASES'
+top|dddd HH:mm|h — mm AP|24|tells 24-hour time beside a 24-hour clock
+top|dddd h:mm AP|HH — mm|12|tells 12-hour time beside a 12-hour clock
+left|dddd h:mm AP|HH — mm|24|reads a side bar's clock by its stacked format
+left|dddd HH:mm|h — mm AP|12|tells 12-hour time beside a stacked 12-hour clock
+top|'Today' h:mm|HH — mm|24|reads an a inside a quoted literal as text
+CASES

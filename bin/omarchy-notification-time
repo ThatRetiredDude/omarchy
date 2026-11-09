@@ -7,7 +7,26 @@
 # every part, so a notification sent at midnight can't mix two days.
 locale=$(omarchy-language locale)
 now=$(date +%s)
-day_time=$(LC_TIME=$locale date -d "@$now" +"%A %H:%M")
+
+# The time is 12-hour when the bar clock's is: its format has an AM/PM marker
+# and no 24-hour H outside quoted text. AM and PM stand in where the locale's
+# glibc data has no words for them.
+if [[ $(omarchy-bar position) =~ ^(left|right)$ ]]; then
+  clock_format=$(omarchy-bar get omarchy.clock verticalFormat)
+else
+  clock_format=$(omarchy-bar get omarchy.clock format)
+fi
+clock_tokens=$(sed "s/'[^']*'\?//g" <<<"$clock_format")
+
+if [[ $clock_tokens == *[Aa]* && $clock_tokens != *H* ]]; then
+  period=$(LC_TIME=$locale date -d "@$now" +%p)
+  [[ -n $period ]] || period=$(LC_TIME=C date -d "@$now" +%p)
+  time="$(date -d "@$now" +%-I:%M) $period"
+else
+  time=$(date -d "@$now" +%H:%M)
+fi
+
+day_time="$(LC_TIME=$locale date -d "@$now" +%A) $time"
 day_month_year=$(LC_TIME=$locale date -d "@$now" +"%d %B %Y")
 
 omarchy-notification-send -g  -u low "$(omarchy-i18n time.now "$day_time" "$day_month_year" "$(date -d "@$now" +%V)")"
