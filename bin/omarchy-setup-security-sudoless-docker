@@ -37,7 +37,7 @@ if gum confirm --affirmative "$(omarchy-i18n common.yes)" --negative "$(omarchy-
   omarchy-state set reboot-required
   echo ""
   echo "Sudoless Docker ENABLED. It takes effect after a reboot."
-  echo "To disable it again: Setup > Security > Sudoless Docker."
+  echo "To disable it again: Remove > Security > Sudoless Docker."
   echo ""
   # The migration reuses this command during 'omarchy update' and defers the
   # reboot to omarchy-update-restart, so it doesn't cut the update short.
